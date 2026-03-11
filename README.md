@@ -1,145 +1,98 @@
-car710w-research
-
-Reverse engineering the firmware of my Jensen CAR710W head unit to locate and modify UI assets such as boot animations and backgrounds.
-
-2026-03-08 — First Firmware Dive
-
+# car710w-research
+Reverse engineering the firmware of my Jensen CAR710W head unit to locate and modifiy UI assets such as boot animations and backgrounds.
+## 2026-03-08 - First dive into the firmware
 Target: Jensen CAR710W firmware
-Goal: Locate boot animation or UI background assets.
+Goal: Locate boot animation asset or background assets, whatever else I can see.
 
-Tools Used
+## Tools Used
+-wsl
+-binwalk
+-unsquashfs
+-ffprobe
+-ffmeg
 
-WSL
+## Firmware Aquisition
+-Downloaed from manufacturer's website
+-ISPBOOOT.BIN
+-ISPBOOOT_UPDATE_U.BIN
 
-binwalk
-
-unsquashfs
-
-ffprobe
-
-ffmpeg
-
-Firmware Acquisition
-
-Downloaded from the manufacturer website:
-
-ISPBOOOT.BIN
-
-ISPBOOOT_UPDATE_U.BIN
-
-Firmware Scan
-
-Initial scan:
-
-binwalk ISPBOOOT.BIN
-
-Key results:
-
-8577024    0x82E000   Squashfs filesystem
-10768384   0xA45000   Squashfs filesystem
-11022336   0xA83000   Squashfs filesystem
-46112768   0x2BFA000  Squashfs filesystem
-
-Filesystem references discovered inside the firmware:
-
-/dev/vc/0
-/sys/module/sp_spinand/parameters/hwcfg
-/sys/kernel/debug/gc/galcore_trace
-Notable Discoveries
-
-U-Boot images
-
-Linux kernel 4.9.217
-
-Raw NAND partitions embedded in firmware
-
-Firmware Partition Layout
-
-Partitions discovered from flashing scripts:
-
-uboot
-env
-ecos
-kernel
-rootfs
-opt
-spsdk
-spapp
-nvm
-pq
-logo
-tcon
-runtime_cfg
-vi
-isp_logo
-vendordata
-pat_logo
-version_info
-vd_restore
-anm_logo
-userdata
-
-These partitions are programmed directly to NAND during firmware flashing.
-
-Filesystem Extraction
-unsquashfs rootfs.squashfs
-
-Example extracted structure:
-
+## Commands Executed
+```binwalk ISPBOOOT.bin```
+gave us
+-8577024       0x82E000        Squashfs filesystem, little endian, version 4.0, compression:gzip (non-standard type definition), size: 2187539 bytes, 501 inodes, blocksize: 32768 bytes, created: 2022-11-17 11:11:23
+10768384      0xA45000        Squashfs filesystem, little endian, version 4.0, compression:gzip (non-standard type definition), size: 250942 bytes, 2 inodes, blocksize: 32768 bytes, created: 2022-11-17 11:11:23
+11022336      0xA83000        Squashfs filesystem, little endian, version 4.0, compression:gzip (non-standard type definition), size: 35088130 bytes, 746 inodes, blocksize: 32768 bytes, created: 2022-11-17 11:11:24
+46112768      0x2BFA000       Squashfs filesystem, little endian, version 4.0, compression:gzip (non-standard type definition), size: 7848662 bytes, 107 inodes, blocksize: 32768 bytes, created: 2022-11-17 11:11:23
+as well as a bit of the file structure
+7680276       0x753114        Unix path: /dev/vc/0
+7761726       0x766F3E        Unix path: /sys/module/sp_spinand/parameters/hwcfg
+7836400       0x7792F0        Unix path: /sys/kernel/debug/gc/galcore_trace
+Notables
+-U-Boot images
+-Linux kernal (4.9.217)
+-Raw partitions stored inside the firmware image
+All important partitions
+-uboot
+-env
+-ecos
+-kernel
+-rootfs
+-opt
+-spsdk
+-spapp
+-nvm
+-pq
+-logo
+-tcon
+-runtime_cfg
+-vi
+-isp_logo
+-vendordata
+-pat_logo
+-verison_info
+-vd_restore
+-anm_logo => BIG ONE
+-userdata
+These partitions are programmed directly to NAND using the firmware flashing scripts
+```unsqaushfs rootfs.squashfs```
+Example rootfs strutcture:
 /bin
 /etc
 /lib
 /usr
 /init.rc
 /init.gui.rc
+This confirms:
+Linux userspace enviroment
+Busybox based
+custom display stack using DirectFB
 
-This confirms the system uses:
+## Before Chasing boot animation I first tried to get to the backgrounds
+carved out isp_logo
+```grep -oba OGOL ISPBOOOT.BIN```
+firmware contains a PART container holding update images
+Structure:
+PART/
+/isp_begin.bin
+/isp_ok.bin
+/isp_failed.bin
+Images inside use a propietary OGOL format.
+-4 bytes magic = OGOL
+-32 byte header
+-raw pixel data
+-Resolution 1024xx600
+-Pixel order ABGR
 
-Linux userspace
+## Decoded images included:
 
-BusyBox utilities
-
-DirectFB graphics stack
-
-Attempt #1 — Background Images
-
-First attempt was to locate UI background images.
-
-Searching firmware for OGOL image blobs:
-
-grep -oba OGOL ISPBOOOT.BIN
-
-Firmware contains a PART container with update images.
-
-Structure
-PART
- ├── isp_begin.bin
- ├── isp_ok.bin
- └── isp_failed.bin
-
-Images use a proprietary OGOL format.
-
-OGOL format
-4 bytes  magic = OGOL
-32 byte  header
-raw pixel data
-resolution: 1024x600
-pixel order: ABGR
-Decoded Update Images
-
-Update screen images successfully decoded.
-
-Updating screen
-<img width="1024" height="600" src="https://github.com/user-attachments/assets/ffb12f84-e68b-4a9c-bdc2-02c1a532dc41" />
-Burn success screen
-<img width="1024" height="600" src="https://github.com/user-attachments/assets/89adbc38-3f03-4c4f-86c1-3636a58b1907" />
-
-These appear only during firmware flashing, not during normal operation.
-
-Logo Region Investigation
-
-Multiple OGOL blobs discovered:
-
+Updating...
+<img width="1024" height="600" alt="ogol_56521872_hdr0020_1024x600_RGBA" src="https://github.com/user-attachments/assets/ffb12f84-e68b-4a9c-bdc2-02c1a532dc41" />
+Burn success, welcome! 
+These were not background image<img width="1024" height="600" alt="ogol_54064240_hdr0020_1024x600_RGBA" src="https://github.com/user-attachments/assets/89adbc38-3f03-4c4f-86c1-3636a58b1907" />
+s but images that flash while updating bummer
+## Main Logo Regin
+-Multiple OGOL blobs exist in the logo region though
+-offsets discovered:
 54064240
 56521872
 58979504
@@ -148,66 +101,56 @@ Multiple OGOL blobs discovered:
 60828880
 61444336
 
-Some decode partially but appear to contain layered assets rather than full background images.
+Some decode partially but appear to contain layered or tiled assets rather than full images.
 
 Further investigation required.
 
-Boot Animation Discovery (anm_logo)
+## Boot Animation (anm_logo) = The Big Discovery of the night.
+```tail -c +$((62063664 + 1)) ISPBOOOT.BIN > anm_logo.mkv```
+Returned
+anm_logo_0x95000.bin: Matroska data
 
-Major discovery of the session.
-
-Extraction:
-
-tail -c +$((62063664 + 1)) ISPBOOOT.BIN > anm_logo.mkv
-
-Result:
-
-Matroska video file
+DECIMAL       HEXADECIMAL     DESCRIPTION
+--------------------------------------------------------------------------------
+0             0x0             EBML file, Matroska data
 Video properties
-Container: MKV
-Codec: MPEG4 (XviD)
-Resolution: 1072x600
-Pixel format: yuv420p
-Framerate: 24 FPS
-Duration: 4 seconds
-Bitrate: ~1220 kb/s
+Container: Matroska (.mkv)
+resolution 1072x600 => odd finding that the images were a different resolution
+pixel format: yuv420p
+framrate: 24FPS
+duration 4 seconds
+bitrate: ~1220kb/s
 
-Boot animation preview:
+We found the boot animation that fires on boot!
+![anm_logo](https://github.com/user-attachments/assets/5b76bc69-097c-4d73-bfe5-ab32db67dde3)
+Because it uses a standard container and codec, it can be replaced with a custom animation provided the replacement:
 
-This confirms the head unit plays a standard MKV video during boot.
+remains ≤ 0x95000 bytes
 
-Boot Animation Modding
+uses compatible codec/resolution
 
-Boot animation can be replaced provided the new video:
+duration roughly similar
 
-stays under 0x95000 bytes
+This makes boot animation customization straightforward.
 
-uses compatible codec
+Next step here is to replace it and rebuild firmware and throw it on the headunit
 
-uses similar resolution
+## Relevant UI Rendering Code
 
-stays around 4 seconds
-
-This makes boot animation customization relatively straightforward.
-
-Next step is rebuilding the firmware and testing a custom animation.
-
-UI Rendering Code
-
-Binary analysis revealed UI rendering functions:
+Binary analysis revealed background rendering functions:
 
 Draw_Background_From_Nand
 Set_Background_Transparency
 Stop_Animation_Logo
 
-Located in:
+These are located in:
 
 libpfc_service.so
 libsppfc.so
 
-This strongly suggests UI backgrounds are read directly from NAND.
+These strongly suggest the UI background is read from a NAND partition rather than embedded resources.
 
-Possible partitions involved:
+Potential partitions involved:
 
 logo
 pat_logo
@@ -216,19 +159,19 @@ vendordata
 
 Further investigation required.
 
-CarPlay Subsystem
+## CarPlay Subsystem
 
-CarPlay related assets discovered:
+CarPlay related files discovered:
 
 /etc/carplay/oemIcon.png
 /etc/carplay/oemIcon120.png
 
-CarPlay services present:
+CarPlay services present in binaries:
 
 apple_carplay_server
 libspcarplay.so
 
-Potential targets for customization:
+These may control:
 
 CarPlay background
 
@@ -236,32 +179,27 @@ OEM icon
 
 theme assets
 
-Key Takeaways
+Possibility exists for replacing CarPlay UI resources.
 
-The firmware is surprisingly mod-friendly.
+## Key Takeaways
 
-Characteristics:
+This firmware is surprisingly hackable:
 
-Linux based
+Linux based system
 
-SquashFS root filesystem
+SquashFS rootfs
 
-standard MKV boot animation
+Standard video container for boot animation
 
-raw framebuffer images
+Raw framebuffer images
 
-no obvious encryption
+No obvious encryption on assets
 
 Confirmed customizable components:
 
-boot animation
+Boot animation
+Firmware update screens
+CarPlay icon assets
+Potential UI backgrounds
 
-update images
-
-CarPlay icons
-
-possible UI backgrounds
-
-Session Time
-
-Total time spent: ~1.5 hours
+## Total time spent this night: 1.5HR
