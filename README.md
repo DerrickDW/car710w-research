@@ -20,10 +20,10 @@ Goal: Locate boot animation asset or background assets, whatever else I can see.
 
 ### Firmware scan
 
-```bash
-binwalk ISPBOOOT.bin```
+
+```binwalk ISPBOOOT.bin```
 gave us
--8577024       0x82E000        Squashfs filesystem, little endian, version 4.0, compression:gzip (non-standard type definition), size: 2187539 bytes, 501 inodes, blocksize: 32768 bytes, created: 2022-11-17 11:11:23
+8577024       0x82E000        Squashfs filesystem, little endian, version 4.0, compression:gzip (non-standard type definition), size: 2187539 bytes, 501 inodes, blocksize: 32768 bytes, created: 2022-11-17 11:11:23
 10768384      0xA45000        Squashfs filesystem, little endian, version 4.0, compression:gzip (non-standard type definition), size: 250942 bytes, 2 inodes, blocksize: 32768 bytes, created: 2022-11-17 11:11:23
 11022336      0xA83000        Squashfs filesystem, little endian, version 4.0, compression:gzip (non-standard type definition), size: 35088130 bytes, 746 inodes, blocksize: 32768 bytes, created: 2022-11-17 11:11:24
 46112768      0x2BFA000       Squashfs filesystem, little endian, version 4.0, compression:gzip (non-standard type definition), size: 7848662 bytes, 107 inodes, blocksize: 32768 bytes, created: 2022-11-17 11:11:23
@@ -32,31 +32,31 @@ as well as a bit of the file structure
 7761726       0x766F3E        Unix path: /sys/module/sp_spinand/parameters/hwcfg
 7836400       0x7792F0        Unix path: /sys/kernel/debug/gc/galcore_trace
 Notables
--U-Boot images
--Linux kernal (4.9.217)
--Raw partitions stored inside the firmware image
+U-Boot images
+Linux kernal (4.9.217)
+Raw partitions stored inside the firmware image
 All important partitions
--uboot
--env
--ecos
--kernel
--rootfs
--opt
--spsdk
--spapp
--nvm
--pq
--logo
--tcon
--runtime_cfg
--vi
--isp_logo
--vendordata
--pat_logo
--verison_info
--vd_restore
--anm_logo => BIG ONE
--userdata
+uboot
+env
+ecos
+kernel
+rootfs
+opt
+spsdk
+spapp
+nvm
+pq
+logo
+tcon
+runtime_cfg
+vi
+isp_logo
+vendordata
+pat_logo
+verison_info
+vd_restore
+anm_logo => BIG ONE
+userdata
 These partitions are programmed directly to NAND using the firmware flashing scripts
 ```unsqaushfs rootfs.squashfs```
 Example rootfs strutcture:
