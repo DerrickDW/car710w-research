@@ -16,26 +16,34 @@ Goal: Locate boot animation asset or background assets, whatever else I can see.
 -ISPBOOOT.BIN
 -ISPBOOOT_UPDATE_U.BIN
 
-## Commands Executed
+## Firmware Scan
 
-### Firmware scan
+### Command Executed
 
+```bash
+binwalk ISPBOOOT.bin
 
-```binwalk ISPBOOOT.bin```
-gave us
-8577024       0x82E000        Squashfs filesystem, little endian, version 4.0, compression:gzip (non-standard type definition), size: 2187539 bytes, 501 inodes, blocksize: 32768 bytes, created: 2022-11-17 11:11:23
-10768384      0xA45000        Squashfs filesystem, little endian, version 4.0, compression:gzip (non-standard type definition), size: 250942 bytes, 2 inodes, blocksize: 32768 bytes, created: 2022-11-17 11:11:23
-11022336      0xA83000        Squashfs filesystem, little endian, version 4.0, compression:gzip (non-standard type definition), size: 35088130 bytes, 746 inodes, blocksize: 32768 bytes, created: 2022-11-17 11:11:24
-46112768      0x2BFA000       Squashfs filesystem, little endian, version 4.0, compression:gzip (non-standard type definition), size: 7848662 bytes, 107 inodes, blocksize: 32768 bytes, created: 2022-11-17 11:11:23
-as well as a bit of the file structure
-7680276       0x753114        Unix path: /dev/vc/0
-7761726       0x766F3E        Unix path: /sys/module/sp_spinand/parameters/hwcfg
-7836400       0x7792F0        Unix path: /sys/kernel/debug/gc/galcore_trace
-Notables
+Key results:
+
+8577024       0x82E000        Squashfs filesystem, little endian, version 4.0, compression:gzip, size: 2187539 bytes, 501 inodes
+10768384      0xA45000        Squashfs filesystem, little endian, version 4.0, compression:gzip, size: 250942 bytes, 2 inodes
+11022336      0xA83000        Squashfs filesystem, little endian, version 4.0, compression:gzip, size: 35088130 bytes, 746 inodes
+46112768      0x2BFA000       Squashfs filesystem, little endian, version 4.0, compression:gzip, size: 7848662 bytes, 107 inodes
+
+The scan also revealed parts of the filesystem structure embedded in the firmware image:
+
+/dev/vc/0
+/sys/module/sp_spinand/parameters/hwcfg
+/sys/kernel/debug/gc/galcore_trace
+Notable Discoveries
+
 U-Boot images
-Linux kernal (4.9.217)
-Raw partitions stored inside the firmware image
-All important partitions
+
+Linux kernel 4.9.217
+
+Raw partitions stored directly inside the firmware image
+
+Identified Firmware Partitions
 uboot
 env
 ecos
@@ -53,23 +61,32 @@ vi
 isp_logo
 vendordata
 pat_logo
-verison_info
+version_info
 vd_restore
-anm_logo => BIG ONE
+anm_logo   ← boot animation partition
 userdata
-These partitions are programmed directly to NAND using the firmware flashing scripts
-```unsqaushfs rootfs.squashfs```
-Example rootfs strutcture:
+
+These partitions are programmed directly to NAND using the firmware flashing scripts.
+
+Filesystem Extraction
+unsquashfs rootfs.squashfs
+
+Example extracted root filesystem structure:
+
 /bin
 /etc
 /lib
 /usr
 /init.rc
 /init.gui.rc
-This confirms:
-Linux userspace enviroment
-Busybox based
-custom display stack using DirectFB
+
+This confirms the system contains:
+
+A Linux userspace environment
+
+A BusyBox based system
+
+A custom display stack using DirectFB
 
 ## Before Chasing boot animation I first tried to get to the backgrounds
 carved out isp_logo
