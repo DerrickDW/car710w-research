@@ -21,7 +21,7 @@ Goal: Locate boot animation asset or background assets, whatever else I can see.
 ### Firmware scan
 
 ```bash
-binwalk ISPBOOOT.bin
+binwalk ISPBOOOT.bin```
 gave us
 -8577024       0x82E000        Squashfs filesystem, little endian, version 4.0, compression:gzip (non-standard type definition), size: 2187539 bytes, 501 inodes, blocksize: 32768 bytes, created: 2022-11-17 11:11:23
 10768384      0xA45000        Squashfs filesystem, little endian, version 4.0, compression:gzip (non-standard type definition), size: 250942 bytes, 2 inodes, blocksize: 32768 bytes, created: 2022-11-17 11:11:23
