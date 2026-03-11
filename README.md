@@ -16,21 +16,19 @@ Goal: Locate boot animation asset or background assets, whatever else I can see.
 -ISPBOOOT.BIN
 -ISPBOOOT_UPDATE_U.BIN
 
-## Firmware Scan
+Firmware Scan
+Command Executed
 
-### Command Executed
-
-```bash
 binwalk ISPBOOOT.bin
 
 Key results:
 
-8577024       0x82E000        Squashfs filesystem, little endian, version 4.0, compression:gzip, size: 2187539 bytes, 501 inodes
-10768384      0xA45000        Squashfs filesystem, little endian, version 4.0, compression:gzip, size: 250942 bytes, 2 inodes
-11022336      0xA83000        Squashfs filesystem, little endian, version 4.0, compression:gzip, size: 35088130 bytes, 746 inodes
-46112768      0x2BFA000       Squashfs filesystem, little endian, version 4.0, compression:gzip, size: 7848662 bytes, 107 inodes
+8577024    0x82E000   Squashfs filesystem, gzip, size: 2187539 bytes
+10768384   0xA45000   Squashfs filesystem, gzip, size: 250942 bytes
+11022336   0xA83000   Squashfs filesystem, gzip, size: 35088130 bytes
+46112768   0x2BFA000  Squashfs filesystem, gzip, size: 7848662 bytes
 
-The scan also revealed parts of the filesystem structure embedded in the firmware image:
+The scan also revealed parts of the filesystem embedded in the firmware image:
 
 /dev/vc/0
 /sys/module/sp_spinand/parameters/hwcfg
@@ -41,37 +39,61 @@ U-Boot images
 
 Linux kernel 4.9.217
 
-Raw partitions stored directly inside the firmware image
+Raw partitions stored inside the firmware image
 
 Identified Firmware Partitions
+
 uboot
+
 env
+
 ecos
+
 kernel
+
 rootfs
+
 opt
+
 spsdk
+
 spapp
+
 nvm
+
 pq
+
 logo
+
 tcon
+
 runtime_cfg
+
 vi
+
 isp_logo
+
 vendordata
+
 pat_logo
+
 version_info
+
 vd_restore
-anm_logo   ← boot animation partition
+
+anm_logo ← boot animation partition
+
 userdata
 
 These partitions are programmed directly to NAND using the firmware flashing scripts.
 
 Filesystem Extraction
+
+Command used:
+
 unsquashfs rootfs.squashfs
 
-Example extracted root filesystem structure:
+Example root filesystem structure:
 
 /bin
 /etc
@@ -82,11 +104,21 @@ Example extracted root filesystem structure:
 
 This confirms the system contains:
 
-A Linux userspace environment
+Linux userspace environment
 
-A BusyBox based system
+BusyBox based system
 
-A custom display stack using DirectFB
+Custom display stack using DirectFB
+
+
+This will render properly as:
+
+- headings  
+- commands in bash blocks  
+- outputs in plain blocks  
+- readable lists
+
+---
 
 ## Before Chasing boot animation I first tried to get to the backgrounds
 carved out isp_logo
